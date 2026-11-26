@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quanto costa?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F2F5FA;--ink:#14204D;--muted:#5B6694;--card:#fff;--line:#D5DBEA;--tag:#FFD60A;--tagink:#14204D;--red:#D93A28;--ok:#157A4B;
+  font-family:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0E1430;--ink:#EEF1FF;--muted:#9AA5D6;--card:#172048;--line:#2B376E;--red:#FF6B57;--ok:#5FD39A;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);min-height:100%;padding:max(18px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom));line-height:1.4}
+main{max-width:560px;margin:0 auto}
+h1{font-size:2.6rem;font-weight:800;line-height:1;margin:18px 0 6px;letter-spacing:-.02em}
+h2{font-size:1.15rem;font-weight:800;margin:0 0 10px}
+p{margin:0 0 14px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+input,select,button{font:inherit;color:inherit}
+input,select{width:100%;padding:13px 14px;border-radius:10px;border:2px solid var(--line);background:var(--bg);margin-bottom:10px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+button{cursor:pointer;border:0;border-radius:10px;padding:13px 18px;font-weight:800;background:var(--ink);color:var(--bg);width:100%}
+button.alt{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.hide{display:none!important}
+.err{color:var(--red);font-weight:500;min-height:1.4em;margin:8px 0 0}
+.code{font-size:3.2rem;font-weight:800;letter-spacing:.14em;text-align:center;margin:4px 0 2px}
+.players{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.players li{padding:7px 12px;border-radius:999px;border:2px solid var(--line);font-weight:500}
+.players li.done{border-color:var(--ok);color:var(--ok)}
+.players li.me{background:var(--line)}
+/* cartellino del prezzo */
+.tag{position:relative;background:var(--tag);color:var(--tagink);border-radius:6px 22px 22px 6px;padding:22px 22px 20px 54px;margin-bottom:14px}
+.tag::before{content:"";position:absolute;left:18px;top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:var(--bg);box-shadow:inset 0 0 0 2px rgba(20,32,77,.35)}
+.tag .emoji{font-size:3.4rem;line-height:1}
+.tag .name{font-size:1.5rem;font-weight:800;line-height:1.15;margin:8px 0 4px}
+.tag .desc{margin:0;color:var(--tagink);opacity:.8}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:6px 0 16px}
+.bar i{display:block;height:100%;width:100%;background:var(--red);transition:width .25s linear}
+.meta{display:flex;justify-content:space-between;align-items:baseline;font-weight:500;color:var(--muted)}
+.time{font-size:2rem;font-weight:800;color:var(--ink)}
+.guess{display:flex;gap:10px}.guess input{margin:0;font-size:1.4rem;font-weight:800}.guess button{width:auto;white-space:nowrap}
+.price{font-size:3.6rem;font-weight:800;color:var(--tagink);line-height:1.05;margin:6px 0 0}
+table{width:100%;border-collapse:collapse}
+td,th{padding:9px 6px;text-align:right;border-bottom:1px solid var(--line)}
+td:first-child,th:first-child{text-align:left}
+th{font-weight:500;color:var(--muted);font-size:.9rem}
+tr.win td{font-weight:800;color:var(--ok)}
+.pt{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:99px;background:var(--ok);color:var(--bg);font-size:.85rem}
+.hint{font-size:.9rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<main>
+
+<section id="home">
+  <h1>Quanto costa?</h1>
+  <p>Indovina il prezzo degli oggetti. Chi si avvicina di più, vince il punto.</p>
+  <div class="card">
+    <label for="name">Il tuo nome</label>
+    <input id="name" maxlength="16" autocomplete="nickname" placeholder="Es. Giulia">
+    <button id="create">Crea una stanza</button>
+  </div>
+  <div class="card">
+    <h2>Hai un codice?</h2>
+    <input id="joincode" maxlength="4" autocapitalize="characters" placeholder="Codice stanza" style="text-transform:uppercase;letter-spacing:.2em">
+    <button id="join" class="alt">Entra nella stanza</button>
+  </div>
+  <p class="err" id="err" role="alert"></p>
+</section>
+
+<section id="lobby" class="hide">
+  <p style="margin:18px 0 0">Codice stanza: dallo ai tuoi amici</p>
+  <div class="code" id="lcode"></div>
+  <div class="card">
+    <h2>Giocatori (<span id="lcount">0</span>)</h2>
+    <ul class="players" id="lplayers"></ul>
+  </div>
+  <div id="hostctl" class="card hide">
+    <label for="rounds">Numero di oggetti</label>
+    <select id="rounds"><option>5</option><option selected>10</option><option>15</option><option>20</option></select>
+    <button id="start">Inizia la partita</button>
+  </div>
+  <p id="waitmaster" class="hide">Aspetta che il master avvii la partita…</p>
+</section>
+
+<section id="game" class="hide">
+  <div class="meta"><span id="ground"></span><span class="time" id="gtime">30</span></div>
+  <div class="bar"><i id="gbar"></i></div>
+  <div class="tag">
+    <div class="emoji" id="gemoji"></div>
+    <div class="name" id="gname"></div>
+    <p class="desc" id="gdesc"></p>
+  </div>
+  <div class="guess">
+    <input id="gval" type="text" inputmode="decimal" placeholder="Prezzo in €" autocomplete="off" aria-label="Il tuo prezzo in euro">
+    <button id="gdone">Fatto</button>
+  </div>
+  <p class="hint" id="ghint" style="margin-top:10px">Quando tutti premono “Fatto” si passa subito al risultato.</p>
+  <ul class="players" id="gplayers"></ul>
+</section>
+
+<section id="reveal" class="hide">
+  <div class="meta"><span id="rround"></span></div>
+  <div class="tag">
+    <div class="name" id="rname"></div>
+    <div class="price" id="rprice"></div>
+  </div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Giocatore</th><th>Risposta</th><th>Scarto</th><th>Punti</th></tr></thead>
+      <tbody id="rtable"></tbody>
+    </table>
+  </div>
+  <button id="next" class="hide"></button>
+  <p id="rwait" class="hide">Aspetta il master…</p>
+</section>
+
+<section id="end" class="hide">
+  <h1>Classifica finale</h1>
+  <p id="ewin"></p>
+  <div class="card"><table><tbody id="etable"></tbody></table></div>
+  <button id="again" class="hide">Nuova partita</button>
+  <p id="ewait" class="hide">Aspetta il master…</p>
+</section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+/* ====== OGGETTI (modificali pure: prezzi in euro, indicativi) ====== */
+const ITEMS=[
+ {emoji:"☕",name:"Moka Bialetti Express",desc:"3 tazze, alluminio",price:25},
+ {emoji:"🎧",name:"AirPods Pro (2ª gen.)",desc:"Auricolari con cancellazione del rumore",price:249},
+ {emoji:"🎮",name:"PlayStation 5",desc:"Versione standard con lettore disco",price:500},
+ {emoji:"🍫",name:"Nutella 750 g",desc:"Il barattolo grande",price:6},
+ {emoji:"🧱",name:"LEGO Colosseo",desc:"Set 10276, oltre 9.000 pezzi",price:550},
+ {emoji:"📖",name:"Kindle",desc:"E-reader base, 16 GB",price:110},
+ {emoji:"👟",name:"Nike Air Force 1",desc:"Bianche, modello classico",price:120},
+ {emoji:"🧀",name:"Parmigiano Reggiano",desc:"1 kg, stagionato 24 mesi",price:25},
+ {emoji:"🎒",name:"Zaino Eastpak Padded Pak’r",desc:"Quello della scuola",price:55},
+ {emoji:"🕹️",name:"Nintendo Switch OLED",desc:"Console con schermo OLED",price:350},
+ {emoji:"🍲",name:"Bimby TM6",desc:"Robot da cucina con cottura",price:1400},
+ {emoji:"⌚",name:"Casio F-91W",desc:"L’orologio digitale più famoso",price:18},
+ {emoji:"🕶️",name:"Ray-Ban Wayfarer",desc:"Occhiali da sole classici",price:160},
+ {emoji:"☕",name:"De’Longhi Dedica",desc:"Macchina del caffè espresso",price:200},
+ {emoji:"👖",name:"Levi’s 501",desc:"Jeans originali",price:110},
+ {emoji:"🎲",name:"Monopoly classico",desc:"Edizione italiana",price:28},
+ {emoji:"📺",name:"Smart TV Samsung 55”",desc:"4K, circa 55 pollici",price:450},
+ {emoji:"🧊",name:"Cubo di Rubik",desc:"Originale 3×3",price:12},
+ {emoji:"🛵",name:"Vespa Primavera 125",desc:"Scooter nuovo",price:4600},
+ {emoji:"🧹",name:"Dyson V8",desc:"Aspirapolvere senza fili",price:350}
+];
+const TIME=30000, PREFIX="quantocosta-";
+const $=id=>document.getElementById(id);
+const eur=n=>n.toLocaleString("it-IT",{style:"currency",currency:"EUR",maximumFractionDigits:2});
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let peer,role,myId,hostConn,conns={},S,view,endAt=0,lastRound=-1;
+
+function show(id){["home","lobby","game","reveal","end"].forEach(s=>$(s).classList.toggle("hide",s!==id))}
+function fail(msg){$("err").textContent=msg;show("home");try{peer&&peer.destroy()}catch(e){}peer=null;conns={};S=null;view=null;lastRound=-1}
+function getName(){const n=$("name").value.trim();if(!n){$("err").textContent="Scrivi prima il tuo nome.";$("name").focus();return null}return n}
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const parse=v=>parseFloat(String(v).trim().replace(/\s/g,"").replace(",","."));
+
+/* ====== MASTER (host autoritativo) ====== */
+$("create").onclick=()=>{const n=getName();if(!n)return;role="host";$("err").textContent="";openRoom(n)};
+function openRoom(name){
+  const A="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const code=Array.from({length:4},()=>A[Math.random()*A.length|0]).join("");
+  peer=new Peer(PREFIX+code);
+  peer.on("open",()=>{myId="host";conns={};S={phase:"lobby",code,round:0,total:10,players:{host:{name,score:0,done:false,guess:null}}};broadcast()});
+  peer.on("error",e=>e.type==="unavailable-id"?openRoom(name):fail("Errore di connessione ("+e.type+"). Riprova."));
+  peer.on("connection",c=>{
+    c.on("data",m=>onHostMsg(c,m));
+    c.on("close",()=>drop(c.peer));
+  });
+}
+function onHostMsg(c,m){
+  if(m.type==="join"){
+    if(S.phase!=="lobby"){c.send({type:"denied",reason:"La partita è già iniziata."});return}
+    conns[c.peer]=c;S.players[c.peer]={name:String(m.name).slice(0,16),score:0,done:false,guess:null};broadcast();
+  }else if(m.type==="guess"){onGuess(c.peer,m.v)}
+}
+function drop(id){
+  if(!S||!S.players[id])return;
+  delete S.players[id];delete conns[id];broadcast();
+  if(S.phase==="guess")checkAll();
+}
+function pub(){
+  const g=S.phase==="guess",r=S.phase==="reveal";
+  return{phase:S.phase,code:S.code,round:S.round,total:S.total,
+    players:Object.entries(S.players).map(([id,p])=>({id,name:p.name,score:p.score,done:p.done})),
+    item:S.item?{name:S.item.name,emoji:S.item.emoji,desc:S.item.desc}:null,
+    remaining:g?Math.max(0,S.endAt-Date.now()):0,
+    results:r?S.results:null,price:r?S.item.price:null};
+}
+function broadcast(){
+  const s=pub();
+  Object.values(conns).forEach(c=>c.open&&c.send({type:"state",s}));
+  render(s);
+}
+function startGame(){
+  S.total=Math.min(+$("rounds").value,ITEMS.length);S.deck=shuffle(ITEMS);S.round=0;
+  Object.values(S.players).forEach(p=>p.score=0);
+  S.locked=true;startRound();
+}
+function startRound(){
+  S.round++;S.item=S.deck[S.round-1];S.phase="guess";S.endAt=Date.now()+TIME;S.results=null;
+  Object.values(S.players).forEach(p=>{p.done=false;p.guess=null});
+  clearTimeout(S.t);S.t=setTimeout(timeUp,TIME);broadcast();
+}
+function timeUp(){
+  if(S.phase!=="guess")return;
+  Object.values(conns).forEach(c=>c.open&&c.send({type:"timeup"}));
+  autoSubmit();                 // anche il master invia ciò che ha scritto
+  clearTimeout(S.t);S.t=setTimeout(reveal,1200); // piccola attesa per le risposte in arrivo
+}
+function onGuess(id,v){
+  if(S.phase!=="guess")return;
+  const p=S.players[id];if(!p||p.done||typeof v!=="number"||!isFinite(v))return;
+  p.guess=Math.max(0,v);p.done=true;broadcast();checkAll();
+}
+function checkAll(){if(Object.values(S.players).every(p=>p.done))reveal()}
+function reveal(){
+  if(S.phase!=="guess")return;
+  clearTimeout(S.t);
+  const price=S.item.price;
+  const list=Object.entries(S.players).map(([id,p])=>({id,name:p.name,guess:p.guess,diff:p.guess==null?null:Math.abs(p.guess-price)}));
+  const valid=list.filter(r=>r.diff!=null);
+  const best=valid.length?Math.min(...valid.map(r=>r.diff)):null;
+  list.forEach(r=>{r.won=r.diff!=null&&Math.abs(r.diff-best)<0.005;if(r.won)S.players[r.id].score++;r.score=S.players[r.id].score});
+  list.sort((a,b)=>(a.diff??1e12)-(b.diff??1e12));
+  S.results=list;S.phase="reveal";broadcast();
+}
+function nextStep(){
+  if(S.round>=S.total){S.phase="end";broadcast()}else startRound();
+}
+function resetToLobby(){
+  S.phase="lobby";S.round=0;S.item=null;S.results=null;
+  Object.values(S.players).forEach(p=>{p.score=0;p.done=false;p.guess=null});broadcast();
+}
+$("start").onclick=startGame;
+$("next").onclick=nextStep;
+$("again").onclick=resetToLobby;
+
+/* ====== GIOCATORE ====== */
+$("join").onclick=()=>{
+  const n=getName();if(!n)return;
+  const code=$("joincode").value.trim().toUpperCase();
+  if(code.length!==4){$("err").textContent="Il codice ha 4 caratteri.";return}
+  role="player";$("err").textContent="";
+  peer=new Peer();
+  peer.on("open",id=>{
+    myId=id;hostConn=peer.connect(PREFIX+code,{reliable:true});
+    hostConn.on("open",()=>hostConn.send({type:"join",name:n}));
+    hostConn.on("data",m=>{
+      if(m.type==="state")render(m.s);
+      else if(m.type==="timeup")autoSubmit();
+      else if(m.type==="denied")fail(m.reason);
+    });
+    hostConn.on("close",()=>fail("Il master ha chiuso la stanza."));
+  });
+  peer.on("error",e=>fail(e.type==="peer-unavailable"?"Stanza non trovata. Controlla il codice.":"Errore di connessione ("+e.type+")."));
+};
+
+/* ====== INVIO RISPOSTA ====== */
+function sendGuess(){
+  const v=parse($("gval").value);
+  if(!isFinite(v)||v<0){$("ghint").textContent="Inserisci un numero valido, ad esempio 24,90.";$("gval").focus();return false}
+  if(role==="host")onGuess("host",v);else hostConn.send({type:"guess",v});
+  return true;
+}
+function autoSubmit(){
+  if(!view||view.phase!=="guess")return;
+  const me=view.players.find(p=>p.id===myId);
+  if(me&&!me.done&&isFinite(parse($("gval").value)))sendGuess();
+}
+$("gdone").onclick=sendGuess;
+$("gval").addEventListener("keydown",e=>{if(e.key==="Enter")sendGuess()});
+
+/* ====== RENDER ====== */
+function chips(list){return list.map(p=>`<li class="${p.done?"done":""} ${p.id===myId?"me":""}">${esc(p.name)}${p.done?" ✓":""}</li>`).join("")}
+function render(s){
+  view=s;
+  const isHost=role==="host";
+  if(s.phase==="lobby"){
+    show("lobby");lastRound=-1;
+    $("lcode").textContent=s.code;$("lcount").textContent=s.players.length;
+    $("lplayers").innerHTML=chips(s.players.map(p=>({...p,done:false})));
+    $("hostctl").classList.toggle("hide",!isHost);$("waitmaster").classList.toggle("hide",isHost);
+  }else if(s.phase==="guess"){
+    show("game");
+    if(s.round!==lastRound){
+      lastRound=s.round;endAt=Date.now()+s.remaining;
+      $("gval").value="";$("gval").disabled=false;$("gdone").disabled=false;
+      $("ghint").textContent="Quando tutti premono “Fatto” si passa subito al risultato.";
+      $("gemoji").textContent=s.item.emoji;$("gname").textContent=s.item.name;$("gdesc").textContent=s.item.desc;
+      $("ground").textContent=`Oggetto ${s.round} di ${s.total}`;
+      $("gval").focus();
+    }
+    const me=s.players.find(p=>p.id===myId);
+    if(me&&me.done){$("gval").disabled=true;$("gdone").disabled=true;$("ghint").textContent="Risposta inviata. Aspetto gli altri…"}
+    $("gplayers").innerHTML=chips(s.players);
+  }else if(s.phase==="reveal"){
+    show("reveal");
+    $("rround").textContent=`Oggetto ${s.round} di ${s.total}`;
+    $("rname").textContent=s.item.name;$("rprice").textContent=eur(s.price);
+    $("rtable").innerHTML=s.results.map(r=>`<tr class="${r.won?"win":""}"><td>${esc(r.name)}${r.id===myId?" (tu)":""}</td><td>${r.guess==null?"—":eur(r.guess)}</td><td>${r.diff==null?"—":eur(r.diff)}</td><td>${r.score}${r.won?'<span class="pt">+1</span>':""}</td></tr>`).join("");
+    $("next").textContent=s.round>=s.total?"Vedi la classifica":"Prossimo oggetto";
+    $("next").classList.toggle("hide",!isHost);$("rwait").classList.toggle("hide",isHost);
+  }else if(s.phase==="end"){
+    show("end");
+    const ps=[...s.players].sort((a,b)=>b.score-a.score),top=ps[0].score;
+    const w=ps.filter(p=>p.score===top).map(p=>esc(p.name));
+    $("ewin").innerHTML=w.length>1?`Pareggio tra ${w.join(", ")} con ${top} punti.`:`Vince ${w[0]} con ${top} punti.`;
+    $("etable").innerHTML=ps.map((p,i)=>`<tr class="${p.score===top?"win":""}"><td>${i+1}. ${esc(p.name)}${p.id===myId?" (tu)":""}</td><td>${p.score} pt</td></tr>`).join("");
+    $("again").classList.toggle("hide",!isHost);$("ewait").classList.toggle("hide",isHost);
+  }
+}
+setInterval(()=>{
+  if(!view||view.phase!=="guess")return;
+  const left=Math.max(0,endAt-Date.now());
+  $("gtime").textContent=Math.ceil(left/1000);
+  $("gbar").style.width=(left/TIME*100)+"%";
+},200);
+</script>
+</body>
+</html>
