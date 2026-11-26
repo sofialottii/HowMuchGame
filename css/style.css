@@ -269,13 +269,45 @@ button:disabled {
     font-size: 3.6rem;
     font-weight: 800;
     color: var(--tagink);
-    line-height: 1.05;
-    margin: 6px 0 0
+    line-height: 1.1;
+    margin: 6px 0 0;
+    white-space: nowrap
+}
+
+.scroll {
+    overflow-x: auto
 }
 
 table {
     width: 100%;
     border-collapse: collapse
+}
+
+td:not(:first-child),
+th:not(:first-child) {
+    white-space: nowrap
+}
+
+td:first-child {
+    overflow-wrap: anywhere
+}
+
+@media (max-width:420px) {
+    .scroll {
+        padding: 10px
+    }
+
+    td,
+    th {
+        padding: 9px 4px;
+        font-size: .9rem
+    }
+
+    .pt {
+        margin-left: 4px;
+        padding: 0 6px;
+        font-size: .75rem
+    }
 }
 
 td,

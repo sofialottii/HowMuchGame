@@ -39,7 +39,13 @@
   </div>
   <div id="hostctl" class="card hide">
     <label for="rounds">Numero di oggetti</label>
-    <select id="rounds"><option>5</option><option selected>10</option><option>15</option><option>20</option></select>
+    <select id="rounds">
+      <option>5</option>
+      <option selected>10</option>
+      <option>15</option>
+      <option>20</option>
+      <option value="99">Tutti</option>
+    </select>
     <button id="start">Inizia la partita</button>
   </div>
   <p id="waitmaster" class="hide">Aspetta che il master avvii la partita…</p>
@@ -68,7 +74,7 @@
     <div class="name" id="rname"></div>
     <div class="price" id="rprice"></div>
   </div>
-  <div class="card">
+  <div class="card scroll">
     <table>
       <thead>
         <tr>
@@ -132,6 +138,9 @@
   ITEMS.forEach(i => { new Image().src = i.img }); // precarica le immagini
   let peer, role, myId, hostConn, conns = {}, S, view, endAt = 0, lastRound = -1;
 
+  function fit(el, max) { let f = max; el.style.fontSize = f + "px"; while (el.scrollWidth > el.clientWidth && f > 16) { f -= 2; el.style.fontSize = f + "px" } }
+  function fitPrice() { if (view && view.phase === "reveal") fit($("rprice"), 57) }
+  addEventListener("resize", fitPrice);
   function show(id) { ["home", "lobby", "game", "reveal", "end"].forEach(s => $(s).classList.toggle("hide", s !== id)) }
   function fail(msg) { $("err").textContent = msg; show("home"); try { peer && peer.destroy() } catch (e) { } peer = null; conns = {}; S = null; view = null; lastRound = -1 }
   function getName() { const n = $("name").value.trim(); if (!n) { $("err").textContent = "Scrivi prima il tuo nome."; $("name").focus(); return null } return n }
@@ -282,7 +291,7 @@
     } else if (s.phase === "reveal") {
       show("reveal");
       $("rround").textContent = `Oggetto ${s.round} di ${s.total}`;
-      $("rname").textContent = s.item.name; $("rprice").textContent = eur(s.price);
+      $("rname").textContent = s.item.name; $("rprice").textContent = eur(s.price); fitPrice();
       $("rtable").innerHTML = s.results.map(r => `<tr class="${r.won ? "win" : ""}"><td>${esc(r.name)}${r.id === myId ? " (tu)" : ""}</td><td>${r.guess == null ? "—" : eur(r.guess)}</td><td>${r.diff == null ? "—" : eur(r.diff)}</td><td>${r.score}${r.won ? '<span class="pt">+1</span>' : ""}</td></tr>`).join("");
       $("next").textContent = s.round >= s.total ? "Vedi la classifica" : "Prossimo oggetto";
       $("next").classList.toggle("hide", !isHost); $("rwait").classList.toggle("hide", isHost);
