@@ -1,316 +1,110 @@
 <!DOCTYPE html>
 <html lang="it">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Quanto costa?</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-<main>
 
-<section id="home">
-  <h1>Quanto costa?</h1>
-  <p>Indovina il prezzo degli oggetti. Chi si avvicina di più, vince il punto.</p>
-  <p>Se vinci il punto, bevi e scegli una persona che deve bere.<br>
-    Se sei quello che si è allontanato di più, bevi.</p>
-  <div class="card">
-    <label for="name">Il tuo nome</label>
-    <input id="name" maxlength="16" autocomplete="nickname" placeholder="Es. Seby">
-    <button id="create">Crea una stanza</button>
-  </div>
-  <div class="card">
-    <h2>Hai un codice?</h2>
-    <input id="joincode" maxlength="4" autocapitalize="characters" placeholder="Codice stanza" style="text-transform:uppercase;letter-spacing:.2em">
-    <button id="join" class="alt">Entra nella stanza</button>
-  </div>
-  <p class="err" id="err" role="alert"></p>
-</section>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+        <meta name="theme-color" content="#ffffff">
+        <title>Heartshopper</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@800&display=swap" rel="stylesheet">
+        <style>
+            :root {
+                --viola: #5B2587;
+                --ombra: #8E8A99;
+                color-scheme: light;
+                font-family: 'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', sans-serif
+            }
 
-<section id="lobby" class="hide">
-  <p style="margin:18px 0 0">Codice stanza: dallo ai tuoi amici</p>
-  <div class="code" id="lcode"></div>
-  <div class="card">
-    <h2>Giocatori (<span id="lcount">0</span>)</h2>
-    <ul class="players" id="lplayers"></ul>
-  </div>
-  <div id="hostctl" class="card hide">
-    <label for="rounds">Numero di oggetti</label>
-    <select id="rounds">
-      <option>5</option>
-      <option selected>10</option>
-      <option>15</option>
-      <option>20</option>
-      <option value="99">Tutti</option>
-    </select>
-    <button id="start">Inizia la partita</button>
-  </div>
-  <p id="waitmaster" class="hide">Aspetta che il master avvii la partita…</p>
-</section>
+            * {
+                box-sizing: border-box
+            }
 
-<section id="game" class="hide">
-  <div class="meta"><span id="ground"></span><span class="time" id="gtime">30</span></div>
-  <div class="bar"><i id="gbar"></i></div>
-  <div class="tag">
-    <img id="gimg" alt="">
-    <div class="name" id="gname"></div>
-    <p class="desc" id="gdesc"></p>
-  </div>
-  <div class="guess">
-    <input id="gval" type="text" inputmode="decimal" placeholder="Prezzo in €" autocomplete="off"
-      aria-label="Il tuo prezzo in euro">
-    <button id="gdone">Fatto</button>
-  </div>
-  <p class="hint" id="ghint" style="margin-top:10px">Quando tutti premono “Fatto” si passa subito al risultato.</p>
-  <ul class="players" id="gplayers"></ul>
-</section>
+            html,
+            body {
+                height: 100%;
+                margin: 0;
+                overflow: hidden;
+                background: #fff
+            }
+            
+            .stage {
+                position: fixed;
+                left: 50%;
+                bottom: 0;
+                transform: translateX(-50%);
+                width: min(100vw, calc(100vh*9/16));
+                width: min(100vw, calc(100dvh*9/16));
+                aspect-ratio: 9/16;
+                container-type: inline-size;
+            }
 
-<section id="reveal" class="hide">
-  <div class="meta"><span id="rround"></span></div>
-  <div class="tag">
-    <div class="name" id="rname"></div>
-    <div class="price" id="rprice"></div>
-  </div>
-  <div class="card scroll">
-    <table>
-      <thead>
-        <tr>
-          <th>Giocatore</th>
-          <th>Risposta</th>
-          <th>Scarto</th>
-          <th>Punti</th>
-        </tr>
-      </thead>
-      <tbody id="rtable"></tbody>
-    </table>
-  </div>
-  <button id="next" class="hide"></button>
-  <p id="rwait" class="hide">Aspetta il master…</p>
-</section>
+            .stage img {
+                display: block;
+                width: 100%;
+                height: 100%;
+                user-select: none;
+                -webkit-user-drag: none
+            }
 
-<section id="end" class="hide">
-  <h1>Classifica finale</h1>
-  <p id="ewin"></p>
-  <div class="card">
-    <table>
-      <tbody id="etable"></tbody>
-    </table>
-  </div>
-  <button id="again" class="hide">Nuova partita</button>
-  <p id="ewait" class="hide">Aspetta il master…</p>
-</section>
+            /* Il bottone sta nello spazio vuoto tra il titolo e le foto */
+            .btn {
+                position: absolute;
+                left: 50%;
+                top: 32%;
+                transform: translate(-50%, -50%);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 11rem;
+                min-height: 56px;
+                padding: .7em 2.2em;
+                font-size: 1.5rem;
+                font-weight: 800;
+                letter-spacing: .04em;
+                text-transform: uppercase;
+                color: #fff;
+                background: var(--viola);
+                text-decoration: none;
+                border-radius: 999px;
+                box-shadow: 0 .2em 0 var(--ombra);
+                -webkit-tap-highlight-color: transparent;
+            }
 
-</main>
+            @supports (width:1cqw) {
+                .btn {
+                    min-width: 0;
+                    min-height: 0;
+                    width: 58cqw;
+                    padding: 3.6cqw 0;
+                    font-size: 8cqw
+                }
+            }
 
-<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script>
-  /* ====== OGGETTI (immagini nella cartella img/, prezzi in euro) ====== */
-  const ITEMS = [
-    { img: "img/ironman.png", name: "Casco di Iron Man", desc: "Il primo casco, usato sul set", price: 125340 },
-    { img: "img/rinuncia.png", name: "Rinuncia agli studi UniBo", desc: "Quanto costa lasciare l’Università di Bologna", price: 16 },
-    { img: "img/memo.jpg", name: "Biblioteca MEMO", desc: "Quanto è costata la sua realizzazione", price: 6000000 },
-    { img: "img/funko.jpg", name: "Funko Pop più costoso al mondo", desc: "Il più caro mai venduto", price: 191429 },
-    { img: "img/cartolina.jpg", name: "Cartolina d’epoca di Fano", desc: "Un pezzo di storia della città", price: 6 },
-    { img: "img/zelda.jpg", name: "The Legend of Zelda", desc: "Copia originale del primo gioco", price: 793065 },
-    { img: "img/colosseo.png", name: "LEGO Colosseo", desc: "Oltre 9.000 pezzi", price: 550 },
-    { img: "img/dyson.jpg", name: "Dyson V8", desc: "Aspirapolvere senza fili", price: 250 },
-    { img: "img/mantello.jpg", name: "Mantello dell’invisibilità", desc: "Quello di Harry Potter", price: 127000 },
-    { img: "img/napoleone.jpg", name: "Ciocca di capelli di Napoleone", desc: "Una ciocca originale dell’imperatore", price: 12000 },
-    { img: "img/rotolo.jpg", name: "Rotolo di carta igienica", desc: "In oro a 22 carati", price: 1280000 },
-    { img: "img/bitcoin.png", name: "1 Bitcoin", desc: "Una moneta intera", price: 55161 },
-    { img: "img/spiderman.jpg", name: "Costume di Spider-Man", desc: "Originale, quello di Tobey Maguire", price: 268000 },
-    { img: "img/pikachu.jpg", name: "Pikachu Illustrator", desc: "La carta Pokémon", price: 4900000 },
-    { img: "img/martello.jpg", name: "Mjölnir", desc: "Il martello di Thor", price: 72000 },
-    { img: "img/virus.jpg", name: "Il primo virus informatico", desc: "Su floppy disk", price: 1200 },
-    { img: "img/esc.png", name: "Tasto ESC", desc: "Un singolo tasto di una tastiera IBM originale", price: 42 },
-    { img: "img/avengers.png", name: "LEGO Torre degli Avengers", desc: "Set da collezione", price: 500 },
-    { img: "img/monopoly.jpg", name: "Monopoly edizione Fano", desc: "Le vie e i luoghi della città", price: 40 },
-    { img: "img/tartufo.jpg", name: "Tartufo bianco pregiato di Acqualagna", desc: "30 grammi", price: 210 },
-    { img: "img/crescia.jpg", name: "Crescia di Urbino", desc: "450 grammi", price: 5.5 }
-  ];
-  const TIME = 30000, PREFIX = "quantocosta-";
-  const $ = id => document.getElementById(id);
-  const eur = n => n.toLocaleString("it-IT", { style: "currency", currency: "EUR", minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 });
-  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  ITEMS.forEach(i => { new Image().src = i.img }); // precarica le immagini
-  let peer, role, myId, hostConn, conns = {}, S, view, endAt = 0, lastRound = -1;
+            .btn:active {
+                transform: translate(-50%, calc(-50% + .12em));
+                box-shadow: 0 .08em 0 var(--ombra)
+            }
 
-  function fit(el, max) { let f = max; el.style.fontSize = f + "px"; while (el.scrollWidth > el.clientWidth && f > 16) { f -= 2; el.style.fontSize = f + "px" } }
-  function fitPrice() { if (view && view.phase === "reveal") fit($("rprice"), 57) }
-  addEventListener("resize", fitPrice);
-  function show(id) { ["home", "lobby", "game", "reveal", "end"].forEach(s => $(s).classList.toggle("hide", s !== id)) }
-  function fail(msg) { $("err").textContent = msg; show("home"); try { peer && peer.destroy() } catch (e) { } peer = null; conns = {}; S = null; view = null; lastRound = -1 }
-  function getName() { const n = $("name").value.trim(); if (!n) { $("err").textContent = "Scrivi prima il tuo nome."; $("name").focus(); return null } return n }
-  const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0;[a[i], a[j]] = [a[j], a[i]] } return a };
-  const parse = v => parseFloat(String(v).trim().replace(/\s/g, "").replace(",", "."));
+            .btn:focus-visible {
+                outline: 4px solid #14204D;
+                outline-offset: 4px
+            }
 
-  /* ====== MASTER (host autoritativo) ====== */
-  $("create").onclick = () => { const n = getName(); if (!n) return; role = "host"; $("err").textContent = ""; openRoom(n) };
-  function openRoom(name) {
-    const A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    const code = Array.from({ length: 4 }, () => A[Math.random() * A.length | 0]).join("");
-    peer = new Peer(PREFIX + code);
-    peer.on("open", () => { myId = "host"; conns = {}; S = { phase: "lobby", code, round: 0, total: 10, players: { host: { name, score: 0, done: false, guess: null } } }; broadcast() });
-    peer.on("error", e => e.type === "unavailable-id" ? openRoom(name) : fail("Errore di connessione (" + e.type + "). Riprova."));
-    peer.on("connection", c => {
-      c.on("data", m => onHostMsg(c, m));
-      c.on("close", () => drop(c.peer));
-    });
-  }
-  function onHostMsg(c, m) {
-    if (m.type === "join") {
-      if (S.phase !== "lobby") { c.send({ type: "denied", reason: "La partita è già iniziata." }); return }
-      conns[c.peer] = c; S.players[c.peer] = { name: String(m.name).slice(0, 16), score: 0, done: false, guess: null }; broadcast();
-    } else if (m.type === "guess") { onGuess(c.peer, m.v) }
-  }
-  function drop(id) {
-    if (!S || !S.players[id]) return;
-    delete S.players[id]; delete conns[id]; broadcast();
-    if (S.phase === "guess") checkAll();
-  }
-  function pub() {
-    const g = S.phase === "guess", r = S.phase === "reveal";
-    return {
-      phase: S.phase, code: S.code, round: S.round, total: S.total,
-      players: Object.entries(S.players).map(([id, p]) => ({ id, name: p.name, score: p.score, done: p.done })),
-      item: S.item ? { name: S.item.name, img: S.item.img, desc: S.item.desc } : null,
-      remaining: g ? Math.max(0, S.endAt - Date.now()) : 0,
-      results: r ? S.results : null, price: r ? S.item.price : null
-    };
-  }
-  function broadcast() {
-    const s = pub();
-    Object.values(conns).forEach(c => c.open && c.send({ type: "state", s }));
-    render(s);
-  }
-  function startGame() {
-    S.total = Math.min(+$("rounds").value, ITEMS.length); S.deck = shuffle(ITEMS); S.round = 0;
-    Object.values(S.players).forEach(p => p.score = 0);
-    S.locked = true; startRound();
-  }
-  function startRound() {
-    S.round++; S.item = S.deck[S.round - 1]; S.phase = "guess"; S.endAt = Date.now() + TIME; S.results = null;
-    Object.values(S.players).forEach(p => { p.done = false; p.guess = null });
-    clearTimeout(S.t); S.t = setTimeout(timeUp, TIME); broadcast();
-  }
-  function timeUp() {
-    if (S.phase !== "guess") return;
-    Object.values(conns).forEach(c => c.open && c.send({ type: "timeup" }));
-    autoSubmit();                 // anche il master invia ciò che ha scritto
-    clearTimeout(S.t); S.t = setTimeout(reveal, 1200); // piccola attesa per le risposte in arrivo
-  }
-  function onGuess(id, v) {
-    if (S.phase !== "guess") return;
-    const p = S.players[id]; if (!p || p.done || typeof v !== "number" || !isFinite(v)) return;
-    p.guess = Math.max(0, v); p.done = true; broadcast(); checkAll();
-  }
-  function checkAll() { if (Object.values(S.players).every(p => p.done)) reveal() }
-  function reveal() {
-    if (S.phase !== "guess") return;
-    clearTimeout(S.t);
-    const price = S.item.price;
-    const list = Object.entries(S.players).map(([id, p]) => ({ id, name: p.name, guess: p.guess, diff: p.guess == null ? null : Math.abs(p.guess - price) }));
-    const valid = list.filter(r => r.diff != null);
-    const best = valid.length ? Math.min(...valid.map(r => r.diff)) : null;
-    list.forEach(r => { r.won = r.diff != null && Math.abs(r.diff - best) < 0.005; if (r.won) S.players[r.id].score++; r.score = S.players[r.id].score });
-    list.sort((a, b) => (a.diff ?? 1e12) - (b.diff ?? 1e12));
-    S.results = list; S.phase = "reveal"; broadcast();
-  }
-  function nextStep() {
-    if (S.round >= S.total) { S.phase = "end"; broadcast() } else startRound();
-  }
-  function resetToLobby() {
-    S.phase = "lobby"; S.round = 0; S.item = null; S.results = null;
-    Object.values(S.players).forEach(p => { p.score = 0; p.done = false; p.guess = null }); broadcast();
-  }
-  $("start").onclick = startGame;
-  $("next").onclick = nextStep;
-  $("again").onclick = resetToLobby;
+            @media (prefers-reduced-motion:reduce) {
+                .btn {
+                    transition: none
+                }
+            }
+        </style>
+    </head>
 
-  /* ====== GIOCATORE ====== */
-  $("join").onclick = () => {
-    const n = getName(); if (!n) return;
-    const code = $("joincode").value.trim().toUpperCase();
-    if (code.length !== 4) { $("err").textContent = "Il codice ha 4 caratteri."; return }
-    role = "player"; $("err").textContent = "";
-    peer = new Peer();
-    peer.on("open", id => {
-      myId = id; hostConn = peer.connect(PREFIX + code, { reliable: true });
-      hostConn.on("open", () => hostConn.send({ type: "join", name: n }));
-      hostConn.on("data", m => {
-        if (m.type === "state") render(m.s);
-        else if (m.type === "timeup") autoSubmit();
-        else if (m.type === "denied") fail(m.reason);
-      });
-      hostConn.on("close", () => fail("Il master ha chiuso la stanza."));
-    });
-    peer.on("error", e => fail(e.type === "peer-unavailable" ? "Stanza non trovata. Controlla il codice." : "Errore di connessione (" + e.type + ")."));
-  };
-
-  /* ====== INVIO RISPOSTA ====== */
-  function sendGuess() {
-    const v = parse($("gval").value);
-    if (!isFinite(v) || v < 0) { $("ghint").textContent = "Inserisci un numero valido, ad esempio 24,90."; $("gval").focus(); return false }
-    if (role === "host") onGuess("host", v); else hostConn.send({ type: "guess", v });
-    return true;
-  }
-  function autoSubmit() {
-    if (!view || view.phase !== "guess") return;
-    const me = view.players.find(p => p.id === myId);
-    if (me && !me.done && isFinite(parse($("gval").value))) sendGuess();
-  }
-  $("gdone").onclick = sendGuess;
-  $("gval").addEventListener("keydown", e => { if (e.key === "Enter") sendGuess() });
-
-  /* ====== RENDER ====== */
-  function chips(list) { return list.map(p => `<li class="${p.done ? "done" : ""} ${p.id === myId ? "me" : ""}">${esc(p.name)}${p.done ? " ✓" : ""}</li>`).join("") }
-  function render(s) {
-    view = s;
-    const isHost = role === "host";
-    if (s.phase === "lobby") {
-      show("lobby"); lastRound = -1;
-      $("lcode").textContent = s.code; $("lcount").textContent = s.players.length;
-      $("lplayers").innerHTML = chips(s.players.map(p => ({ ...p, done: false })));
-      $("hostctl").classList.toggle("hide", !isHost); $("waitmaster").classList.toggle("hide", isHost);
-    } else if (s.phase === "guess") {
-      show("game");
-      if (s.round !== lastRound) {
-        lastRound = s.round; endAt = Date.now() + s.remaining;
-        $("gval").value = ""; $("gval").disabled = false; $("gdone").disabled = false;
-        $("ghint").textContent = "Quando tutti premono “Fatto” si passa subito al risultato.";
-        $("gimg").src = s.item.img; $("gimg").alt = s.item.name; $("gname").textContent = s.item.name; $("gdesc").textContent = s.item.desc;
-        $("ground").textContent = `Oggetto ${s.round} di ${s.total}`;
-        $("gval").focus();
-      }
-      const me = s.players.find(p => p.id === myId);
-      if (me && me.done) { $("gval").disabled = true; $("gdone").disabled = true; $("ghint").textContent = "Risposta inviata. Aspetto gli altri…" }
-      $("gplayers").innerHTML = chips(s.players);
-    } else if (s.phase === "reveal") {
-      show("reveal");
-      $("rround").textContent = `Oggetto ${s.round} di ${s.total}`;
-      $("rname").textContent = s.item.name; $("rprice").textContent = eur(s.price); fitPrice();
-      $("rtable").innerHTML = s.results.map(r => `<tr class="${r.won ? "win" : ""}"><td>${esc(r.name)}${r.id === myId ? " (tu)" : ""}</td><td>${r.guess == null ? "—" : eur(r.guess)}</td><td>${r.diff == null ? "—" : eur(r.diff)}</td><td>${r.score}${r.won ? '<span class="pt">+1</span>' : ""}</td></tr>`).join("");
-      $("next").textContent = s.round >= s.total ? "Vedi la classifica" : "Prossimo oggetto";
-      $("next").classList.toggle("hide", !isHost); $("rwait").classList.toggle("hide", isHost);
-    } else if (s.phase === "end") {
-      show("end");
-      const ps = [...s.players].sort((a, b) => b.score - a.score), top = ps[0].score;
-      const w = ps.filter(p => p.score === top).map(p => esc(p.name));
-      $("ewin").innerHTML = w.length > 1 ? `Pareggio tra ${w.join(", ")} con ${top} punti.` : `Vince ${w[0]} con ${top} punti.`;
-      $("etable").innerHTML = ps.map((p, i) => `<tr class="${p.score === top ? "win" : ""}"><td>${i + 1}. ${esc(p.name)}${p.id === myId ? " (tu)" : ""}</td><td>${p.score} pt</td></tr>`).join("");
-      $("again").classList.toggle("hide", !isHost); $("ewait").classList.toggle("hide", isHost);
-    }
-  }
-  setInterval(() => {
-    if (!view || view.phase !== "guess") return;
-    const left = Math.max(0, endAt - Date.now());
-    $("gtime").textContent = Math.ceil(left / 1000);
-    $("gbar").style.width = (left / TIME * 100) + "%";
-  }, 200);
-</script>
-</body>
+    <body>
+        <main class="stage">
+            <img src="img/sfondoSebi.jpeg" width="1080" height="1920" alt="Heartshopper">
+            <a class="btn" href="game.html">Gioca</a>
+        </main>
+    </body>
 
 </html>
